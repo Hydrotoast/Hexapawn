@@ -1,3 +1,7 @@
+# Project artifacts
+*.idea
+*.xml
+
 *.pyc
 
 __pycache__
