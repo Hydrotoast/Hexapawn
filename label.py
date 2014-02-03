@@ -3,4 +3,4 @@ RED = 1
 BLUE = 2
 
 def get_opposite(label):
-	return BLUE if label == RED else RED
+    return BLUE if label == RED else RED

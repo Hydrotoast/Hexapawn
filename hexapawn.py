@@ -5,325 +5,331 @@ import oracle
 import itertools
 import os
 
-class Position(object):
-	"""Defines a position on the board."""
-	def __init__(self, row, col):
-		self.row = row
-		self.col = col
 
-	def __repr__(self):
-		return '(%d, %d)' % (self.row, self.col)
+class Position(object):
+    """Defines a position on the board."""
+    def __init__(self, row, col):
+        self.row = row
+        self.col = col
+
+    def __repr__(self):
+        return '(%d, %d)' % (self.row, self.col)
+
 
 class Piece(object):
-	"""Defines a position on the board."""
-	def __init__(self, state, color, pos):
-		self.state = state
-		self.color = color
-		self.pos = pos
+    """Defines a position on the board."""
+    def __init__(self, state, color, pos):
+        self.state = state
+        self.color = color
+        self.pos = pos
 
-	def get_moves(self):
-		""" Returns a list of all possible moves from this piece."""
-		row_offset = 1 if self.color == label.RED else -1
-		left_offset = -1
-		right_offset = 1
+    def get_moves(self):
+        """ Returns a list of all possible moves from this piece."""
+        row_offset = 1 if self.color == label.RED else -1
+        left_offset = -1
+        right_offset = 1
 
-		moves = []
+        moves = []
 
-		# Try advance
-		if self.state.check_cell(self.pos.row + row_offset, self.pos.col) == label.BLANK:
-			moves.append(Move(self, Position(self.pos.row + row_offset, self.pos.col)))
+        # Try advance
+        if self.state.check_cell(self.pos.row + row_offset, self.pos.col) == label.BLANK:
+            moves.append(Move(self, Position(self.pos.row + row_offset, self.pos.col)))
 
-		# Left attack
-		if self.state.check_cell(self.pos.row + row_offset, self.pos.col + left_offset) == label.get_opposite(self.color):
-			moves.append(Move(self, Position(self.pos.row + row_offset, self.pos.col + left_offset)))
+        # Left attack
+        if self.state.check_cell(self.pos.row + row_offset, self.pos.col + left_offset) == \
+                label.get_opposite(self.color):
+            moves.append(Move(self, Position(self.pos.row + row_offset, self.pos.col + left_offset)))
 
-		# Right attack
-		if self.state.check_cell(self.pos.row + row_offset, self.pos.col + right_offset) == label.get_opposite(self.color):
-			moves.append(Move(self, Position(self.pos.row + row_offset, self.pos.col + right_offset)))
+        # Right attack
+        if self.state.check_cell(self.pos.row + row_offset, self.pos.col + right_offset) == \
+                label.get_opposite(self.color):
+            moves.append(Move(self, Position(self.pos.row + row_offset, self.pos.col + right_offset)))
 
-		return moves
+        return moves
 
-	@property
-	def row(self):
-		return self.pos.row
+    @property
+    def row(self):
+        return self.pos.row
 
-	@property
-	def col(self):
-		return self.pos.col
-	
-	def __repr__(self):
-		return "%s at %s" % (self.color, self.pos)
+    @property
+    def col(self):
+        return self.pos.col
+
+    def __repr__(self):
+        return "%s at %s" % (self.color, self.pos)
+
 
 class Move(object):
-	def __init__(self, pawn, pos):
-		self.pawn = pawn
-		self.pos = pos
+    def __init__(self, pawn, pos):
+        self.pawn = pawn
+        self.pos = pos
 
-	def __repr__(self):
-		return "%s %s" % (self.pawn, self.pos)
+    def __repr__(self):
+        return "%s %s" % (self.pawn, self.pos)
+
 
 class Player(object):
-	def __init__(self, color):
-		self.color = color
-	
-	def make_move(self, state):
-		state.draw_board()
-		
+    def __init__(self, color):
+        self.color = color
+
+    def make_move(self, state):
+        state.draw_board()
+
 
 class HexapawnState(object):
-	"""The game of Hexapawn."""
-	def __init__(self):
-		self.board = []
-		self.board.append([label.RED] * 3)
-		self.board.append([label.BLANK] * 3)
-		self.board.append([label.BLUE] * 3)
-		
-		self.turn = label.RED
-		self.gameover = False
+    """The game of Hexapawn."""
+    def __init__(self, width):
+        self.width = width
 
-	def get_available_moves(self):
-		"""Returns the set of available moves."""
-		pawns = []
-		
-		# Scan the playable pawns on the board
-		for i, j in itertools.product(range(3), range(3)):
-			if self.board[i][j] == self.turn:
-				pawns.append(Piece(self, self.turn, Position(i, j)))
+        self.board = []
+        self.board.append([label.RED] * self.width)
+        self.board.append([label.BLANK] * self.width)
+        self.board.append([label.BLUE] * self.width)
 
-		moves = []
-		for pawn in pawns:
-			for move in pawn.get_moves():
-				moves.append(move)
+        self.__turn = label.RED
+        self.__gameover = False
+        self.winner = None
 
-		return moves
+    def get_available_moves(self):
+        """Returns the set of available moves."""
+        pawns = []
 
-	def make_move(self, move):
-		"""Makes a move on the game board."""
-		self.board[move.pawn.row][move.pawn.col] = label.BLANK
-		self.board[move.pos.row][move.pos.col] = move.pawn.color
+        # Scan the playable pawns on the board
+        for i, j in itertools.product(range(3), range(self.width)):
+            if self.board[i][j] == self.turn:
+                pawns.append(Piece(self, self.turn, Position(i, j)))
 
-	def alternate_turn(self):
-		"""Alternates the player turn on the board."""
-		self.turn = label.get_opposite(self.turn)
+        moves = []
+        for pawn in pawns:
+            for move in pawn.get_moves():
+                moves.append(move)
 
-	def check_gameover(self):
-		"""Checks if the gameover state has occurred."""
-		# Check no piece end
-		red = 0
-		blue = 0
-		for i, j in itertools.product(range(3), range(3)):
-			if self.board[i][j] == label.RED:
-				red += 1
-			elif self.board[i][j] == label.BLUE:
-				blue += 1
-		if red == 0:
-			self.winner = label.BLUE
-			return True
-		elif blue == 0:
-			self.winner = label.RED
-			return True
+        return moves
 
-		# Check RED end line
-		red = 0
-		for i in range(3):
-			if self.board[2][i] == label.RED:
-				red += 1
-		if red == 3:
-			self.winner = label.RED
-			return True
+    def make_move(self, move):
+        """Makes a move on the game board."""
+        self.board[move.pawn.row][move.pawn.col] = label.BLANK
+        self.board[move.pos.row][move.pos.col] = move.pawn.color
 
-		# Check BLUE end line
-		blue = 0
-		for i in range(3):
-			if self.board[0][i] == label.BLUE:
-				blue += 1
-		if blue == 3:
-			self.winner = label.BLUE
-			return True
+    def alternate_turn(self):
+        """Alternates the player turn on the board."""
+        self.turn = label.get_opposite(self.turn)
 
-		# No moves available
-		if len(self.get_available_moves()) == 0:
-			self.winner = label.get_opposite(self.turn)
-			return True
+    def check_gameover(self):
+        """Checks if the gameover state has occurred."""
+        # Check no piece end
+        red = 0
+        blue = 0
+        for i, j in itertools.product(range(3), range(self.width)):
+            if self.board[i][j] == label.RED:
+                red += 1
+            elif self.board[i][j] == label.BLUE:
+                blue += 1
+        if red == 0:
+            self.winner = label.BLUE
+            return True
+        elif blue == 0:
+            self.winner = label.RED
+            return True
 
-	def get_pawn(self, row, col, color):
-		if self.check_cell(row, col) == color:
-			return Piece(self, self.turn, Position(row, col))
-		else:
-			return None
+        # Check RED end line
+        for i in range(self.width):
+            if self.board[2][i] == label.RED:
+                self.winner = label.RED
+                return True
 
-	def check_cell(self, row, col):
-		return -1 if row < 0 or row > 2 or col < 0 or col > 2 else self.board[row][col]
+        # Check BLUE end line
+        for i in range(self.width):
+            if self.board[0][i] == label.BLUE:
+                self.winner = label.BLUE
+                return True
 
-	def draw_board(self):
-		for i in range(3):
-			print(self.board[i])
-		print()
+        # No moves available
+        if len(self.get_available_moves()) == 0:
+            self.winner = label.get_opposite(self.turn)
+            return True
 
-	@property
-	def turn(self):
-		return self.__turn
+    def get_pawn(self, row, col, color):
+        if self.check_cell(row, col) == color:
+            return Piece(self, self.turn, Position(row, col))
+        else:
+            return None
 
-	@turn.setter
-	def turn(self, value):
-		self.__turn = value
+    def check_cell(self, row, col):
+        return -1 if row < 0 or row > (self.width - 1) or col < 0 or col > (self.width - 1) else self.board[row][col]
 
-	@property
-	def gameover(self):
-		return self.__gameover
+    def draw_board(self):
+        for i in range(3):
+            print(self.board[i])
+        print()
 
-	@gameover.setter
-	def gameover(self, value):
-		self.__gameover = value
+    @property
+    def turn(self):
+        return self.__turn
 
-	def __cmp__(self, other):
-		if self.board < self.other:
-			return -1
-		elif self.board > self.other:
-			return 1
-		return 0
+    @turn.setter
+    def turn(self, value):
+        self.__turn = value
 
-	def __str__(self):
-		return '\n'.join(x for x in map(lambda x: str(x), self.board))
+    @property
+    def gameover(self):
+        return self.__gameover
 
-	def __repr__(self):
-		return '\n'.join(x for x in map(lambda x: str(x), self.board))
+    @gameover.setter
+    def gameover(self, value):
+        self.__gameover = value
+
+    def __cmp__(self, other):
+        if self.board < other:
+            return -1
+        elif self.board > other:
+            return 1
+        return 0
+
+    def __str__(self):
+        return '\n'.join(x for x in map(lambda x: str(x), self.board))
+
+    def __repr__(self):
+        return '\n'.join(x for x in map(lambda x: str(x), self.board))
+
 
 class BotPlayer(object):
-	def __init__(self, color):
-		self.color = color
-		self.solver = minimax.Minimax(self.color)
-	
-	def make_move(self, state):
-		move, score = self.solver.minimax(state)
-		return move
+    def __init__(self, color):
+        self.color = color
+        self.solver = minimax.Minimax(self.color)
+
+    def make_move(self, state):
+        move, score = self.solver.minimax(state)
+        return move
+
 
 class HumanPlayer(object):
-	def __init__(self, color):
-		self.color = color
-	
-	def make_move(self, state):
-		state.draw_board()
-		print('Make a move, sir')
+    def __init__(self, color):
+        self.color = color
 
-		pawn = None
-		valid = False
-		print('Begin by selecting a pawn in a row and column')
-		while not valid:
-			row = int(input('Row: '))
-			col = int(input('Col: '))
-			pawn = state.get_pawn(row, col, self.color)
-			if pawn != None:
-				valid = True
-		
-		final_pos = None
-		valid = False
-		print('Select a final position for the pawn')
-		while not valid:
-			row = int(input('Row: '))
-			col = int(input('Col: '))
-			if state.check_cell(row, col) == label.BLANK:
-				final_pos = Position(row, col)
-				valid = True
+    def make_move(self, state):
+        state.draw_board()
+        print('Make a move, sir')
 
-		return Move(pawn, final_pos)
+        pawn = None
+        valid = False
+        print('Begin by selecting a pawn in a row and column')
+        while not valid:
+            row = int(input('Row: '))
+            col = int(input('Col: '))
+            pawn = state.get_pawn(row, col, self.color)
+            if pawn is not None:
+                valid = True
+        final_pos = None
+        valid = False
+        print('Select a final position for the pawn')
+        while not valid:
+            row = int(input('Row: '))
+            col = int(input('Col: '))
+            if state.check_cell(row, col) == label.BLANK:
+                final_pos = Position(row, col)
+                valid = True
+
+        return Move(pawn, final_pos)
 
 
 def solve_game():
-	print('Solving game by minimax')
-	state = HexapawnState()
+    print('Solving game by minimax')
+    state = HexapawnState(3)
 
-	solver = minimax.Minimax(label.RED)
-	move, score = solver.minimax(state)
+    solver = minimax.Minimax(label.RED)
+    move, score = solver.minimax(state)
 
-	if score == float('inf'):
-		print('Winner is RED player')
-	else:
-		print('Winner is BLUE player')
+    if score == float('inf'):
+        print('Winner is RED player')
+    else:
+        print('Winner is BLUE player')
+
 
 def play_game():
-	state = HexapawnState()
-	print('Select a color [r]/b?')
-	player_wants_red = input() == 'r'
-	
-	if player_wants_red:
-		print('You are RED')
-		red = HumanPlayer(label.RED)
-		blue = BotPlayer(label.BLUE)
-	else:
-		print('You are BLUE')
-		red = BotPlayer(label.RED)
-		blue = HumanPlayer(label.BLUE)
+    state = HexapawnState(3)
+    print('Select a color [r]/b?')
+    player_wants_red = input() == 'r'
 
-	while not state.check_gameover():
-		move = red.make_move(state)
-		state.make_move(move)
-		state.alternate_turn()
+    if player_wants_red:
+        print('You are RED')
+        red = HumanPlayer(label.RED)
+        blue = BotPlayer(label.BLUE)
+    else:
+        print('You are BLUE')
+        red = BotPlayer(label.RED)
+        blue = HumanPlayer(label.BLUE)
 
-		if state.check_gameover():
-			break
+    while not state.check_gameover():
+        move = red.make_move(state)
+        state.make_move(move)
+        state.alternate_turn()
 
-		move = blue.make_move(state)
-		state.make_move(move)
-		state.alternate_turn()
+        if state.check_gameover():
+            break
 
-	if state.winner == label.RED:
-		print('Winner is RED player')
-	else:
-		print('Winner is BLUE player')
+        move = blue.make_move(state)
+        state.make_move(move)
+        state.alternate_turn()
+
+    if state.winner == label.RED:
+        print('Winner is RED player')
+    else:
+        print('Winner is BLUE player')
+
 
 def oracle_learn():
-	state = HexapawnState()
+    state = HexapawnState(5)
 
-	red = oracle.Oracle()
-	blue = oracle.Oracle()
+    red = oracle.Oracle()
+    blue = oracle.Oracle()
 
-	blue_winner = False
-	for i in range(100):
-		while not state.check_gameover():
-			try:
-				move = red.consult(state)
-				state.make_move(move)
-				state.alternate_turn()
-			except oracle.GameoverException:
-				state.winner = label.BLUE
-				red.loss()
-				break
+    for i in range(100):
+        while not state.check_gameover():
+            move = red.consult(state)
+            try:
+                state.make_move(move)
+                state.alternate_turn()
+            except oracle.GameoverException:
+                state.winner = label.BLUE
+                red.loss(state, move)
+                break
 
-			if state.check_gameover():
-				break
+            if state.check_gameover():
+                break
 
-			try:
-				move = blue.consult(state)
-				state.make_move(move)
-				state.alternate_turn()
-			except oracle.GameoverException:
-				state.winner = label.RED
-				blue.loss()
-				break
+            move = blue.consult(state)
+            try:
+                state.make_move(move)
+                state.alternate_turn()
+            except oracle.GameoverException:
+                state.winner = label.RED
+                blue.loss(state, move)
+                break
 
-		if state.winner == label.RED:
-			print('Winner is RED player')
-		else:
-			print('Winner is BLUE player')
+        if state.winner == label.RED:
+            print('Winner is RED player')
+        else:
+            print('Winner is BLUE player')
 
-	for state, moves in red.learned.items():
-		print(state, moves, os.linesep)
+    for state, moves in red.learned.items():
+        print(state, moves, os.linesep)
 
-	for state, moves in blue.learned.items():
-		print(state, moves, os.linesep)
+    for state, moves in blue.learned.items():
+        print(state, moves, os.linesep)
+
 
 if __name__ == '__main__':
-	print('Starting a game of Hexapawn (3x3)')
-	print('RED player moves first')
-	print()
+    print('Starting a game of Hexapawn (3x3)')
+    print('RED player moves first')
+    print()
 
-	# oracle_learn()
-	print('Solve for winner? [y]/n:')
-	should_solve = input() == 'y'
-	print()
+    # oracle_learn()
+    print('Solve for winner? [y]/n:')
+    should_solve = input() == 'y'
+    print()
 
-	if should_solve:
-		solve_game()
-	else:
-		play_game()
+    if should_solve:
+        solve_game()
+    else:
+        play_game()
