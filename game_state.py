@@ -146,10 +146,23 @@ class HexapawnState(object):
     def check_cell(self, row, col):
         return -1 if row < 0 or row > (self.width - 1) or col < 0 or col > (self.width - 1) else self.board[row][col]
 
-    def draw_board(self):
-        for i in range(3):
-            print(self.board[i])
-        print()
+    def draw_board(self):        
+      print()
+      print(' ', end=' ')
+      blabels = [str(i) for i in range(3)]
+      for ele in blabels:
+        print("|",ele, end=" ")
+      print('|')
+      print('-'*15)
+      i = 0
+      for row in self.board:
+        print(blabels[i], end = " ")
+        i += 1
+        for ele in row:
+          print ("|",ele, end=" ")
+        print("|")
+        print('-'*15)
+      print()
 
     @property
     def turn(self):
