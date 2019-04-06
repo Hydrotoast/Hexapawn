@@ -47,6 +47,7 @@ def play_game():
         print('Winner is RED player')
     else:
         print('Winner is BLUE player')
+    state.draw_board()
 
 
 def oracle_learn():
@@ -82,6 +83,7 @@ def oracle_learn():
             print('Winner is RED player')
         else:
             print('Winner is BLUE player')
+        state.draw_board()
 
     for state, moves in red.learned.items():
         print(state, moves, os.linesep)
