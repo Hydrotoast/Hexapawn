@@ -149,7 +149,7 @@ class HexapawnState(object):
     def draw_board(self):        
       print()
       print(' ', end=' ')
-      blabels = ['1', '2', '3']
+      blabels = ['0', '1', '2']
       print('|', ' | '.join(blabels), end=' ')
       print('|')
       print('-'*15)
