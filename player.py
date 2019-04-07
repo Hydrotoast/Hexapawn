@@ -37,7 +37,7 @@ class HumanPlayer(object):
             print('Begin by selecting a pawn in a row and column')
             row = eval(input('Select a row: '))
             col = eval(input('Select a column: '))
-            if (row in range(3)) and (col in range(3)):
+            if (0 <= row <= 2) and (0 <= col <= 2):
                 pawn = state.get_pawn(row, col, self.color)
                 if pawn is not None:
                     valid = True
