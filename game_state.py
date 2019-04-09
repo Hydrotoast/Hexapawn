@@ -147,9 +147,28 @@ class HexapawnState(object):
         return -1 if row < 0 or row > (self.width - 1) or col < 0 or col > (self.width - 1) else self.board[row][col]
 
     def draw_board(self):
-        for i in range(3):
-            print(self.board[i])
-        print()
+        """Prints the state of board formatted with edges.
+
+        Example:
+            For a standard 3x3 board, prints a row of column indices, a column of
+            row indices, and the state of the board.
+
+                  | 0 | 1 | 2 |
+                ---------------
+                0 | R | R | R |
+                ---------------
+                1 |   |   |   |
+                ---------------
+                2 | B | B | B |
+                ---------------
+        """
+        header = (str(i) for i in range(self.width))
+        hrule = '-' * 15
+        print('  |', ' | '.join(header), '|')
+        print(hrule)
+        for index, row in enumerate(self.board):
+            print(index, '|', ' | '.join(cell for cell in row), '|')
+            print(hrule)
 
     @property
     def turn(self):

@@ -32,19 +32,21 @@ class HumanPlayer(object):
 
         pawn = None
         valid = False
-        print('Begin by selecting a pawn in a row and column')
-        while not valid:
-            row, col = eval(input('row, col: '))
-            pawn = state.get_pawn(row, col, self.color)
-            if pawn is not None:
-                valid = True
         final_pos = None
-        valid = False
-        print('Select a final position for the pawn')
         while not valid:
-            row, col = eval(input('row, col: '))
-            if state.check_cell(row, col) == label.BLANK:
+            print('Begin by selecting a pawn in a row and column')
+            row = eval(input('Select a row: '))
+            col = eval(input('Select a column: '))
+            if (0 <= row <= 2) and (0 <= col <= 2):
+                pawn = state.get_pawn(row, col, self.color)
+                valid = pawn is not None
+            if valid == True:
+                print('Select a final position for the pawn')
+                row = eval(input('Select a row: '))
+                col = eval(input('Select a column: '))
                 final_pos = Position(row, col)
-                valid = True
+                valid = repr(Move(pawn, final_pos)) in repr(state.get_available_moves())
+            if valid == False:
+                print ("Move not valid, try again.")
 
         return Move(pawn, final_pos)
